@@ -72,3 +72,18 @@ string Account::getType(){
 string Account::getName(){
 	return name;
 }
+
+istream& operator>>(istream& is, Account& ac)
+{
+    is >> ac.acno;
+    is >> ac.deposite;
+    is >> ac.name;
+    is >> ac.type;
+    return is;
+}
+
+ostream& operator<<(ostream& os, const Account& ac)
+{
+    os << ac.acno << " " << ac.deposite << " " << ac.name << " " << ac.type;
+    return os;
+}

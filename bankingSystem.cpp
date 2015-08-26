@@ -25,7 +25,8 @@ int main(int argc, char * argv[])
     for(;;){
     	if(is_file_locked()){
     		cout << "App locked! Press any key to try again!" << endl;
-            cin.ignore();
+
+    		cin.ignore();
             cin.get();
             continue;
         } else {

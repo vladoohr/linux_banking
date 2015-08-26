@@ -13,12 +13,12 @@
 using namespace std;
 
 class Account{
+public:
 	int acno;
 	int deposite;
 	string name;
 	string type;
 
-public:
 	void create_account();
 	void report();
 	void modify();
@@ -30,5 +30,8 @@ public:
 	int acnumber();
 	string getName();
 };
+
+istream& operator>>(istream& is, Account& ac);
+ostream& operator<<(ostream& os, const Account& ac);
 
 #endif /* ACCOUNT_H_ */

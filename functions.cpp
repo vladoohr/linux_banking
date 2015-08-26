@@ -10,8 +10,11 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
+#include <vector>
+#include <iterator>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,35 +28,35 @@ void write_account(){
 	Account ac;
 	ac.create_account();
 
-	errno = 0;
+	// set values in e
+	ofstream out;
 
-	ofstream File;
+	errno = 0;
 	try{
-		File.open("account.dat", ios::binary|ios::app);
-		File.exceptions (std::ios::badbit | std::ios::failbit);
-		File.write(reinterpret_cast<char *> (&ac), sizeof(Account));
+		out.open("account.dat", ios_base::app | ios_base::out);
+		out.exceptions (std::ios::badbit | std::ios::failbit);
+		out << ac;
+		out << endl;
 	} catch(exception &e){
 		if (errno){
-			//cerr << "*Error: " << e.what() << "account.dat" << " - " << strerror(errno) << endl;
+			cerr << "*Error: " << e.what() << "account.dat" << " - " << strerror(errno) << endl;
 		}
 	}
 
-	File.close();
+	out.close();
 }
 
 void display_all(){
 	Account ac;
-
-	ifstream inFile;
-	inFile.open("account.dat", ios::binary);
+	ifstream inFile("account.dat");
 
 	if(!inFile){
 		cout << "File could not be open!!!" << endl;
 		return;
 	}
 
-	while (inFile.read(reinterpret_cast<char *> (&ac), sizeof(Account))){
-		cout << ac.getType() << endl;
+	while (!(inFile >> ac).eof()){
+		cout << to_string(ac.acno) + " " + to_string(ac.deposite) + " " + ac.name + " " + ac.type << endl;
 	}
 
 	inFile.close();
@@ -61,23 +64,32 @@ void display_all(){
 
 void modify_account(int num){
 	Account ac;
+	std::vector<string> words;
 	bool found = false;
 	fstream File;
 	File.open("account.dat", ios::binary|ios::in|ios::out);
+
+	std::string str((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
 
 	if(!File){
 		cout << "File could not be open!!!" << endl;
 		return;
 	}
 
-	while(!File.eof() && found==false){
-		File.read(reinterpret_cast<char *> (&ac), sizeof(Account));
+	File.seekp(0, ios::beg);
+	while(!(File >> ac).eof() && found==false){
 		if ( ac.acnumber() ==  num){
-			cout << "Deposit: " << ac.getDeposit() << endl;
+			Account old_ac = ac;
 			ac.modify();
-			int pos = (-1)*static_cast<int>(sizeof(Account));
-			File.seekp(pos, ios::cur);
-			File.write(reinterpret_cast<char *> (&ac), sizeof(Account));
+
+			std::string line = to_string(old_ac.acno) + " " + to_string(old_ac.deposite) + " " + old_ac.name + " " + old_ac.type + "\n";
+			const char* row = line.c_str();
+			cout << "ROW: " << row << endl;
+			size_t pos = str.find(row);
+			//int pos = static_cast<int>(sizeof(ac));
+			cout << "Position: " << pos << endl;
+			File.seekp(pos, ios::beg);
+			File << ac;
 			cout << "Record updated!";
 			found=true;
 		}
@@ -99,9 +111,11 @@ void delete_account(int num){
 		return;
 	}
 	outFile.open("temp.dat", ios::binary);
-	while(inFile.read(reinterpret_cast<char *>(&ac), sizeof(Account))){
-		if(ac.acnumber() != num){
-			outFile.write(reinterpret_cast<char *> (&ac), sizeof(Account));
+
+	while (!(inFile >> ac).eof()){
+		if ( ac.acnumber() !=  num){
+			outFile << ac;
+			outFile << endl;
 		}
 	}
 
@@ -125,12 +139,12 @@ void display_sp(int num){
 
 	cout << "BALANCE DETAILS" << endl;
 
-	while(inFile.read(reinterpret_cast<char *>(&ac), sizeof(Account))){
-		if(ac.acnumber() == num){
-			ac.show_account();
-			found = true;
+	while (!(inFile >> ac).eof()){
+			if ( ac.acnumber() ==  num){
+				ac.show_account();
+				found = true;
+			}
 		}
-	}
 
 	if (found == false){
 		cout << "Account number does not exist" << endl;
@@ -149,8 +163,10 @@ void deposit_withdraw(int num, int option){
 		return;
 	}
 
-	while(!File.eof() && found==false){
-		File.read(reinterpret_cast<char *> (&ac), sizeof(Account));
+	std::string str((std::istreambuf_iterator<char>(File)), std::istreambuf_iterator<char>());
+	File.seekp(0, ios::beg);
+	while(!(File >> ac).eof() && found == false){
+		Account old_ac = ac;
 		if (ac.acnumber() ==  num){
 			ac.show_account();
 
@@ -172,14 +188,22 @@ void deposit_withdraw(int num, int option){
 					ac.draw(amt);
 			}
 
-			int pos = (-1)*static_cast<int>(sizeof(ac));
-			File.seekp(pos, ios::cur);
-			File.write(reinterpret_cast<char *> (&ac), sizeof(Account));
-			cout << "Record updated!" << endl;
+			std::string line = to_string(old_ac.acno) + " " + to_string(old_ac.deposite) + " " + old_ac.name + " " + old_ac.type + "\n";
+		    const char* row = line.c_str();
+			cout << "ROW: " << row << endl;
+			size_t pos = str.find(row);
+
+			cout << "Position: " << pos << endl;
+			File.seekp(pos, ios::beg);
+			File << ac;
+			File << endl;
+			cout << "Record updated!";
 			found=true;
 		}
+	}
 
-
+	if (found != true){
+		cout << "Account cannot be found!!!" << endl;
 	}
 }
 
@@ -246,5 +270,13 @@ void update_sha(const char* oldname){
 	int result= rename( oldname , newname.c_str() );
 	if ( result != 0 )
 	    perror( "Error renaming file" );
+}
+
+template <typename T>
+std::string to_string(T value)
+{
+	std::ostringstream os ;
+	os << value ;
+	return os.str() ;
 }
 
