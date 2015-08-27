@@ -12,18 +12,19 @@
 #include <cctype>
 #include <iomanip>
 #include <string>
+#include <limits>
 
 using namespace std;
 
 void Account::create_account(){
 	cout << "Enter the account number: ";
-	cin >> acno;
+	acno = validNumericInput();
 	cout << "Enter the name of the account holder: ";
-	cin >> name;
+	name = validStringInput();
 	cout << "Enter the type (C/S): ";
-	cin >> type;
+	type = validStringInput();
 	cout << "Enter the initial amount: ";
-	cin >> deposite;
+	deposite = validNumericInput();
 	cout << "Account created..." << endl;
 }
 
@@ -73,8 +74,7 @@ string Account::getName(){
 	return name;
 }
 
-istream& operator>>(istream& is, Account& ac)
-{
+istream& operator>>(istream& is, Account& ac){
     is >> ac.acno;
     is >> ac.deposite;
     is >> ac.name;
@@ -82,8 +82,43 @@ istream& operator>>(istream& is, Account& ac)
     return is;
 }
 
-ostream& operator<<(ostream& os, const Account& ac)
-{
+ostream& operator<<(ostream& os, const Account& ac){
     os << ac.acno << " " << ac.deposite << " " << ac.name << " " << ac.type;
     return os;
+}
+
+int validNumericInput(){
+    int x;
+    cin >> x;
+    while(cin.fail())
+    {
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(),'\n');
+        cout << "Bad entry. Enter a NUMBER: ";
+        cin >> x;
+    }
+    return x;
+}
+
+string validStringInput(){
+	string s;
+	bool valid;
+
+	for (;;){
+		cin >> s;
+		valid = true;
+
+		for (char & c : s)
+		{
+			if(!isalpha(c)){
+				cout << "Bad entry, valid chars A-Za-z. Try again: ";
+				valid = false;
+			}
+		}
+
+		if (valid)
+			break;
+	}
+
+	return s;
 }

@@ -33,5 +33,7 @@ public:
 
 istream& operator>>(istream& is, Account& ac);
 ostream& operator<<(ostream& os, const Account& ac);
+int validNumericInput();
+string validStringInput();
 
 #endif /* ACCOUNT_H_ */
